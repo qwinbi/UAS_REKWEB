@@ -5,19 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Cart extends Model
+class OrderItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'order_id',
         'product_id',
         'quantity',
+        'price',
     ];
 
-    public function user()
+    public function order()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Order::class);
     }
 
     public function product()
@@ -25,15 +26,9 @@ class Cart extends Model
         return $this->belongsTo(Product::class);
     }
 
-    // Calculate total price for this cart item
+    // Calculate total price for this order item
     public function getTotalPriceAttribute()
     {
-        return $this->product->price * $this->quantity;
-    }
-
-    // Check if product is available in stock
-    public function getIsAvailableAttribute()
-    {
-        return $this->product->stock >= $this->quantity;
+        return $this->price * $this->quantity;
     }
 }

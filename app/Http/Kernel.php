@@ -64,5 +64,9 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        
+        // Custom Middleware untuk BUNNYPOP
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'guest.user' => \App\Http\Middleware\GuestMiddleware::class,
     ];
 }

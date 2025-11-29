@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Order;
+use App\Models\User;
+use App\Models\Cart;
 use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
@@ -16,8 +18,9 @@ class AdminController extends Controller
         $totalProducts = Product::count();
         $totalOrders = Order::count();
         $pendingPayments = Payment::where('status', 'pending')->count();
+        $totalUsers = User::count();
         
-        return view('admin.dashboard', compact('totalProducts', 'totalOrders', 'pendingPayments'));
+        return view('admin.dashboard', compact('totalProducts', 'totalOrders', 'pendingPayments', 'totalUsers'));
     }
 
     public function products()
@@ -120,13 +123,43 @@ class AdminController extends Controller
     public function about()
     {
         $about = Setting::getValue('about_content', '');
-        return view('admin.about', compact('about'));
+        $about_photo = Setting::getValue('about_photo', '');
+        return view('admin.about', compact('about', 'about_photo'));
     }
 
     public function updateAbout(Request $request)
     {
+        $request->validate([
+            'about_content' => 'required|string',
+            'about_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
         Setting::setValue('about_content', $request->about_content);
-        return redirect()->back()->with('success', 'Halaman About berhasil diperbarui!');
+
+        // Handle photo upload
+        if ($request->hasFile('about_photo')) {
+            // Delete old photo if exists
+            $currentPhoto = Setting::getValue('about_photo');
+            if ($currentPhoto) {
+                Storage::disk('public')->delete($currentPhoto);
+            }
+            
+            $photoPath = $request->file('about_photo')->store('about', 'public');
+            Setting::setValue('about_photo', $photoPath);
+        }
+
+        return redirect()->route('admin.about')->with('success', 'Halaman About berhasil diperbarui!');
+    }
+
+    public function removeAboutPhoto()
+    {
+        $currentPhoto = Setting::getValue('about_photo');
+        if ($currentPhoto) {
+            Storage::disk('public')->delete($currentPhoto);
+        }
+        Setting::setValue('about_photo', '');
+
+        return redirect()->route('admin.about')->with('success', 'Foto About berhasil dihapus!');
     }
 
     public function footer()
@@ -138,7 +171,7 @@ class AdminController extends Controller
     public function updateFooter(Request $request)
     {
         Setting::setValue('footer_content', $request->footer_content);
-        return redirect()->back()->with('success', 'Footer berhasil diperbarui!');
+        return redirect()->route('admin.footer')->with('success', 'Footer berhasil diperbarui!');
     }
 
     public function logo()
@@ -156,6 +189,6 @@ class AdminController extends Controller
         $logoPath = $request->file('logo')->store('logos', 'public');
         Setting::setValue('logo_path', $logoPath);
 
-        return redirect()->back()->with('success', 'Logo berhasil diperbarui!');
+        return redirect()->route('admin.logo')->with('success', 'Logo berhasil diperbarui!');
     }
 }
